@@ -118,11 +118,11 @@ func (t *RedBlackTree) Get(item Item) Item {
 	return n.item
 }
 
-// Insert (O(log(n))) inserts (or replaces) an item into the RedBlackTree. If an
+// Upsert (O(log(n))) inserts (or replaces) an item into the RedBlackTree. If an
 // item was replaced, it is returned. Otherwise, nil is returned.
 //
 // Note: equality for items a & b is: (!a.Less(b) && !b.Less(a)).
-func (t *RedBlackTree) Insert(item Item) Item {
+func (t *RedBlackTree) Upsert(item Item) Item {
 	if t.root == nil {
 		t.root = newNode(nil, item)
 		t.root.colour = colourBlack
@@ -447,7 +447,7 @@ func (n *node) rebalanceInsert(t *RedBlackTree) {
 				ps = g.left
 			}
 		}
-		if ps == nil || ps.colour == colourBlack {
+		if ps.isBlack() {
 			break
 		}
 		n.parent.colour = colourBlack
