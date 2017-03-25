@@ -110,6 +110,11 @@ func TestDelete(t *testing.T) {
 		rb.Upsert(tree.Int(i))
 	}
 
+	it := rb.Delete(tree.Int(400))
+	if it != nil {
+		t.Fatalf("Unexpected item deleted: %v", it)
+	}
+
 	for i, j := 100, 101; i > 0 && j <= 200; {
 		it := rb.Delete(tree.Int(i))
 		if it == nil || int(it.(tree.Int)) != i {
@@ -123,8 +128,43 @@ func TestDelete(t *testing.T) {
 		j++
 	}
 
-	it := rb.Delete(tree.Int(400))
+	it = rb.Delete(tree.Int(400))
 	if it != nil {
 		t.Fatalf("Unexpected item deleted: %v", it)
 	}
+}
+
+func TestGet(t *testing.T) {
+	var rb tree.RedBlackTree
+
+	// Check Get, Max, Min on empty tree.
+	if it := rb.Get(tree.Int(1)); it != nil {
+		t.Fatalf("Unexpected item from Get: %v", it)
+	}
+	if it := rb.Max(); it != nil {
+		t.Fatalf("Unexpected item from Max: %v", it)
+	}
+	if it := rb.Min(); it != nil {
+		t.Fatalf("Unexpected item from Min: %v", it)
+	}
+
+	// Insert items.
+	for i := 0; i < 500; i += 5 {
+		rb.Upsert(tree.Int(i))
+	}
+
+	// Verify Get, Min, Max calls.
+	if it := rb.Get(tree.Int(600)); it != nil {
+		t.Fatalf("Unexpected non-nil item: %v", it)
+	}
+	if it := rb.Get(tree.Int(400)); int(it.(tree.Int)) != 400 {
+		t.Fatalf("Unexpected item for value 400: %v", it)
+	}
+	if it := rb.Max(); int(it.(tree.Int)) != 495 {
+		t.Fatalf("Unexpected max item: %v", it)
+	}
+	if it := rb.Min(); int(it.(tree.Int)) != 0 {
+		t.Fatalf("Unexpected min item: %v", it)
+	}
+
 }
