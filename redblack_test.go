@@ -168,3 +168,81 @@ func TestGet(t *testing.T) {
 	}
 
 }
+
+func TestAscendGreaterOrEqual(t *testing.T) {
+	var rb tree.RedBlackTree
+	rb.AscendGreaterOrEqual(tree.Int(5), nil)
+	for i := 0; i < 25; i++ {
+		rb.Upsert(tree.Int(i))
+	}
+
+	i := 5
+	rb.AscendGreaterOrEqual(tree.Int(5), func(item tree.Item) bool {
+		if int(item.(tree.Int)) != i {
+			t.Fatalf("Unexpected range value: %v", item)
+		}
+		if i == 20 {
+			return false
+		}
+		i++
+		return true
+	})
+	if i != 20 {
+		t.Fatalf("Unexpected range end: %d", i)
+	}
+
+	rb.AscendGreaterOrEqual(tree.Int(50), func(item tree.Item) bool {
+		t.Fatal("Unexpected ascend function called")
+		return true
+	})
+}
+
+func TestAscendLess(t *testing.T) {
+	var rb tree.RedBlackTree
+	for i := 0; i < 25; i++ {
+		rb.Upsert(tree.Int(i))
+	}
+
+	var i int
+	rb.AscendLess(tree.Int(20), func(item tree.Item) bool {
+		if int(item.(tree.Int)) != i {
+			t.Fatalf("Unexpected range value: %v", item)
+		}
+		i++
+		return true
+	})
+	if i != 20 {
+		t.Fatalf("Unexpected range end: %d", i)
+	}
+}
+
+func TestAscendRange(t *testing.T) {
+	var rb tree.RedBlackTree
+	for i := 0; i < 25; i++ {
+		rb.Upsert(tree.Int(i))
+	}
+
+	i := 5
+	rb.AscendRange(tree.Int(5), tree.Int(20), func(item tree.Item) bool {
+		if int(item.(tree.Int)) != i {
+			t.Fatalf("Unexpected range value: %v", item)
+		}
+		i++
+		return true
+	})
+	if i != 20 {
+		t.Fatalf("Unexpected range end: %d", i)
+	}
+
+	i = 0
+	rb.AscendRange(tree.Int(-5), tree.Int(50), func(item tree.Item) bool {
+		if int(item.(tree.Int)) != i {
+			t.Fatalf("Unexpected range value: %v", item)
+		}
+		i++
+		return true
+	})
+	if i != 25 {
+		t.Fatalf("Unexpected range end: %d", i)
+	}
+}

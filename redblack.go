@@ -53,34 +53,73 @@ type RedBlackTree struct {
 	size int
 }
 
-// Ascend (O(n)) starts at the first Item and calls 'fn' for each Item until no
+// Ascend starts at the first Item and calls 'fn' for each Item until no
 // Items remain or fn returns 'false'.
+//
+// O(log(n) + m) where n is the total number of items in the tree and m is the
+// number of items ranged over.
 func (t *RedBlackTree) Ascend(fn func(Item) bool) {
-	if t.root == nil {
-		return
-	}
-	n := t.root.min()
+	n := t.minNode()
 	for n != nil && fn(n.item) {
 		n = n.next()
 	}
 }
 
-// Descend (O(n)) starts at the last Item and calls 'fn' for each Item until no
-// Items remain or fn returns 'false'.
-func (t *RedBlackTree) Descend(fn func(Item) bool) {
-	if t.root == nil {
-		return
+// AscendGreaterOrEqual starts at the first Item greater or equal to the
+// provided Item and calls 'fn' for each Item until no Items remain in the tree
+// or fn returns 'false'.
+//
+// O(log(n) + m) where n is the total number of items in the tree and m is the
+// number of items ranged over.
+func (t *RedBlackTree) AscendGreaterOrEqual(than Item, fn func(Item) bool) {
+	n := t.root.findGreaterOrEqual(than)
+	for n != nil && fn(n.item) {
+		n = n.next()
 	}
-	n := t.root.max()
+}
+
+// AscendLess starts at the first Item and calls 'fn' for each Item less than
+// the provided Item or when fn returns 'false'.
+//
+// O(log(n) + m) where n is the total number of items in the tree and m is the
+// number of items ranged over.
+func (t *RedBlackTree) AscendLess(thanItem Item, fn func(Item) bool) {
+	n := t.minNode()
+	for n != nil && n.item.Less(thanItem) && fn(n.item) {
+		n = n.next()
+	}
+}
+
+// AscendRange starts at the first Item greater or equal to 'greaterOrEqual'
+// and calls 'fn' for each Item less than 'lessThan' or when fn returns 'false'.
+//
+// O(log(n) + m) where n is the total number of items in the tree and m is the
+// number of items ranged over.
+func (t *RedBlackTree) AscendRange(greaterOrEqual, lessThan Item, fn func(Item) bool) {
+	n := t.root.findGreaterOrEqual(greaterOrEqual)
+	for n != nil && n.item.Less(lessThan) && fn(n.item) {
+		n = n.next()
+	}
+}
+
+// Descend starts at the last Item and calls 'fn' for each Item until no
+// Items remain or fn returns 'false'.
+//
+// O(log(n) + m) where n is the total number of items in the tree and m is the
+// number of items ranged over.
+func (t *RedBlackTree) Descend(fn func(Item) bool) {
+	n := t.maxNode()
 	for n != nil && fn(n.item) {
 		n = n.prev()
 	}
 }
 
-// Delete (O(log(n))) deletes an item in the RedBlackTree equal to the provided
+// Delete deletes an item in the RedBlackTree equal to the provided
 // item. If an item was deleted, it is returned. Otherwise, nil is returned.
 //
 // Note: equality for items a & b is: (!a.Less(b) && !b.Less(a)).
+//
+// O(log(n))
 func (t *RedBlackTree) Delete(item Item) Item {
 	if t.root == nil {
 		return nil
@@ -88,8 +127,10 @@ func (t *RedBlackTree) Delete(item Item) Item {
 	return t.root.deleteItem(t, item)
 }
 
-// DeleteMax (O(log(n))) deletes the maximum item in the RedBlackTree, returning
+// DeleteMax deletes the maximum item in the RedBlackTree, returning
 // it. If the tree is empty, nil is returned.
+//
+// O(log(n))
 func (t *RedBlackTree) DeleteMax() Item {
 	if t.root == nil {
 		return nil
@@ -97,8 +138,10 @@ func (t *RedBlackTree) DeleteMax() Item {
 	return t.root.deleteMax(t)
 }
 
-// DeleteMin (O(log(n))) deletes the minimum item in the RedBlackTree, returning
+// DeleteMin deletes the minimum item in the RedBlackTree, returning
 // it. If the tree is empty, nil is returned.
+//
+// O(log(n))
 func (t *RedBlackTree) DeleteMin() Item {
 	if t.root == nil {
 		return nil
@@ -106,10 +149,12 @@ func (t *RedBlackTree) DeleteMin() Item {
 	return t.root.deleteMin(t)
 }
 
-// Get (O(log(n))) retrieves an item in the RedBlackTree equal to the provided
+// Get retrieves an item in the RedBlackTree equal to the provided
 // item. If an item was found, it is returned. Otherwise, nil is returned.
 //
 // Note: equality for items a & b is: (!a.Less(b) && !b.Less(a)).
+//
+// O(log(n))
 func (t *RedBlackTree) Get(item Item) Item {
 	n := t.root.find(item)
 	if n == nil {
@@ -118,10 +163,12 @@ func (t *RedBlackTree) Get(item Item) Item {
 	return n.item
 }
 
-// Upsert (O(log(n))) inserts (or replaces) an item into the RedBlackTree. If an
+// Upsert inserts (or replaces) an item into the RedBlackTree. If an
 // item was replaced, it is returned. Otherwise, nil is returned.
 //
 // Note: equality for items a & b is: (!a.Less(b) && !b.Less(a)).
+//
+// O(log(n))
 func (t *RedBlackTree) Upsert(item Item) Item {
 	if t.root == nil {
 		t.root = newNode(nil, item)
@@ -137,41 +184,57 @@ func (t *RedBlackTree) Upsert(item Item) Item {
 	return oldItem
 }
 
-// Exists (O(log(n))) returns 'true' if an item equal to the provided item
+// Exists returns 'true' if an item equal to the provided item
 // exists in the RedBlackTree.
 //
 // Note: equality for items a & b is: (!a.Less(b) && !b.Less(a)).
+//
+// O(log(n))
 func (t *RedBlackTree) Exists(item Item) bool {
 	return t.Get(item) != nil
 }
 
-// Min (O(log(n))) returns the minimum item in the RedBlackTree. If the tree is
+// Min returns the minimum item in the RedBlackTree. If the tree is
 // empty, nil is returned.
+//
+// O(log(n))
 func (t *RedBlackTree) Min() Item {
-	if t.root == nil {
+	n := t.minNode()
+	if n == nil {
 		return nil
-	}
-	n := t.root
-	for n.left != nil {
-		n = n.left
 	}
 	return n.item
 }
 
-// Max (O(log(n))) returns the maximum item in the RedBlackTree. If the tree is
+func (t *RedBlackTree) minNode() *node {
+	if t.root == nil {
+		return nil
+	}
+	return t.root.min()
+}
+
+// Max returns the maximum item in the RedBlackTree. If the tree is
 // empty, nil is returned.
+//
+// O(log(n))
 func (t *RedBlackTree) Max() Item {
-	if t.root == nil {
+	n := t.maxNode()
+	if n == nil {
 		return nil
-	}
-	n := t.root
-	for n.right != nil {
-		n = n.right
 	}
 	return n.item
 }
 
-// Size (O(1)) returns the number of items in the RedBlackTree.
+func (t *RedBlackTree) maxNode() *node {
+	if t.root == nil {
+		return nil
+	}
+	return t.root.max()
+}
+
+// Size returns the number of items in the RedBlackTree.
+//
+// O(1)
 func (t *RedBlackTree) Size() int {
 	return t.size
 }
@@ -210,6 +273,28 @@ func (n *node) find(item Item) *node {
 		}
 	}
 	return nil
+}
+
+func (n *node) findGreaterOrEqual(item Item) *node {
+	if n == nil {
+		return nil
+	}
+	for {
+		switch {
+		case item.Less(n.item):
+			if n.left == nil {
+				return n
+			}
+			n = n.left
+		case n.item.Less(item):
+			if n.right == nil {
+				return nil
+			}
+			n = n.right
+		default:
+			return n
+		}
+	}
 }
 
 func (n *node) deleteMax(t *RedBlackTree) Item {
