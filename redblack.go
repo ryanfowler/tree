@@ -23,14 +23,7 @@
 // Package tree provides an implementation of a red-black tree.
 package tree
 
-// Int represents an integer that implements the Item interface.
-type Int int
-
-// Less returns true if the Int is less than the provided Int. If the provided
-// Item is not an Int, Less will panic.
-func (i Int) Less(than Item) bool {
-	return i < than.(Int)
-}
+import "bytes"
 
 // Item is the interface that wraps the Less method.
 //
@@ -603,4 +596,31 @@ func (n *node) grandparent() *node {
 		return nil
 	}
 	return n.parent.parent
+}
+
+// Int represents an integer that implements the Item interface.
+type Int int
+
+// Less returns true if the Int is less than the provided Int. If the provided
+// Item is not an Int, Less will panic.
+func (i Int) Less(than Item) bool {
+	return i < than.(Int)
+}
+
+// String represents a string that implements the Item interface.
+type String string
+
+// Less returns true if the String is less than the provided String. If the
+// provided Item is not a String, Less will panic.
+func (s String) Less(than Item) bool {
+	return s < than.(String)
+}
+
+// Bytes represents a slice of bytes that implements the Item interface.
+type Bytes []byte
+
+// Less returns true if the Bytes are less than the provided Bytes. If the
+// provided Item is not of type Bytes, Less will panic.
+func (b Bytes) Less(than Item) bool {
+	return bytes.Compare(b, than.(Bytes)) < 0
 }
